@@ -1,0 +1,131 @@
+﻿@page "/"
+@inject NavigationManager NavigationManager
+
+<h1>Учебная платформа</h1>
+
+<button @onclick="OpenCreateCourseModal">Добавить курс</button>
+
+<div class="course-container">
+    @foreach (var course in Courses)
+    {
+        <div class="course-card">
+            <img src="@course.ImageUrl" alt="@course.Title" class="course-image" />
+            <h3>@course.Title</h3>
+            <p>@course.Description</p>
+            <a href="@GetCourseUrl(course.Id)" target="_blank">
+                <button>Записаться</button>
+            </a>
+        </div>
+    }
+</div>
+
+@if (isCreateCourseModalOpen)
+{
+    <div class="modal">
+        <div class="modal-content">
+            <h2>Добавить новый курс</h2>
+            <label>Название курса:</label>
+            <input @bind="newCourse.Title" placeholder="Введите название курса" />
+            <label>Описание курса:</label>
+            <textarea @bind="newCourse.Description" placeholder="Введите описание"></textarea>
+            <label>URL изображения:</label>
+            <input @bind="newCourse.ImageUrl" placeholder="Введите URL изображения" />
+
+            <button @onclick="CreateCourse">Создать курс</button>
+            <button @onclick="CloseCreateCourseModal">Закрыть</button>
+        </div>
+    </div>
+}
+
+@code {
+    private List<Course> Courses = new List<Course>
+    {
+        new Course { Id = 1, Title = "Основы программирования", Description = "Изучите базовые концепции программирования", ImageUrl = "images/Программирование.jpg" },
+        new Course { Id = 2, Title = "Математика для инженеров", Description = "Освойте важные математические методы", ImageUrl = "images/Математика для инженеров.jpg" },
+        new Course { Id = 3, Title = "Введение в механику", Description = "Изучите основы механики", ImageUrl = "images/Введение в механику.webp" },
+        new Course { Id = 4, Title = "Разработка веб-приложений", Description = "Создавайте современные веб-приложения", ImageUrl = "images/Разработка веб приложений.jpg" },
+        new Course { Id = 5, Title = "Алгоритмы и структуры данных", Description = "Углубитесь в алгоритмы и структуры данных", ImageUrl = "images/Алгоритмы и стуктуры данных.jpeg" },
+        new Course { Id = 6, Title = "Теоретическая физика", Description = "Погрузитесь в основы теоретической физики", ImageUrl = "images/Теоретическая физика.jpg" },
+        new Course { Id = 7, Title = "Анализ данных", Description = "Научитесь анализировать и интерпретировать данные", ImageUrl = "images/Анализ данных.jpg" },
+        new Course { Id = 8, Title = "Робототехника", Description = "Узнайте о создании и управлении роботами", ImageUrl = "images/Робототехника.jpg" },
+        new Course { Id = 9, Title = "История", Description = "Узнайте о создании мира и важных личностях", ImageUrl = "images/История.jpg" },
+        new Course { Id = 10, Title = "Философия", Description = "Расширьте свое познание и мировозрение", ImageUrl = "images/Философия.jpg" }
+    };
+
+    private bool isCreateCourseModalOpen = false;
+    private Course newCourse = new Course();
+
+    private void OpenCreateCourseModal()
+    {
+        isCreateCourseModalOpen = true;
+        newCourse = new Course(); // Очищаем данные для нового курса
+    }
+
+    private void CloseCreateCourseModal()
+    {
+        isCreateCourseModalOpen = false;
+    }
+
+    private void CreateCourse()
+    {
+        // Устанавливаем ID для нового курса
+        newCourse.Id = Courses.Any() ? Courses.Max(c => c.Id) + 1 : 1;
+        Courses.Add(newCourse);
+        CloseCreateCourseModal();
+    }
+
+    private string GetCourseUrl(int courseId)
+    {
+        var course = Courses.FirstOrDefault(c => c.Id == courseId);
+        return $"/course{courseId}?title={Uri.EscapeDataString(course.Title)}&description={Uri.EscapeDataString(course.Description)}";
+    }
+
+    private class Course
+    {
+        public int Id { get; set; }
+        public string Title { get; set; }
+        public string Description { get; set; }
+        public string ImageUrl { get; set; }
+    }
+}
+
+
+
+<style>
+    .course-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 20px;
+    }
+
+    .course-card {
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        overflow: hidden;
+        text-align: center;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .course-image {
+        width: 100%;
+        height: 300px;
+        object-fit: cover;
+    }
+
+    button {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        cursor: pointer;
+        border-radius: 4px;
+        margin-top: 10px;
+        margin-bottom: 10px;
+    }
+
+    button:hover {
+        background-color: #0056b3;
+    }
+
+    
+</style>

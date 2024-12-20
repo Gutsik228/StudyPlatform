@@ -1,0 +1,235 @@
+﻿@page "/course6"
+@rendermode InteractiveServer
+
+<h1>Детали курса</h1>
+
+@if (course != null)
+{
+    <h2>@course.Title</h2>
+    <p>@course.Description</p>
+
+    <h3>Тесты:</h3>
+    @foreach (var test in Tests)
+    {
+        <div class="test-container">
+            <h4>@test.Title</h4>
+            <div>
+                @foreach (var option in test.Options)
+                {
+                    <div>
+                        <input type="radio" name="test_@test.Id" value="@option.Id" @onchange="() => SelectAnswer(test.Id, option.Id)" />
+                        <label>@option.Text</label>
+                    </div>
+                }
+            </div>
+            <button @onclick="() => CheckTestAnswer(test.Id)">Проверить ответ</button>
+            <p>@test.ResultMessage</p>
+        </div>
+    }
+
+    <h4>Общий балл:</h4>
+    <p role="status">Current score: @currentScore</p>
+
+    @if (currentScore == Tests.Count) // Уроки открываются только при успешном прохождении всех тестов
+    {
+        <h3>Уроки:</h3>
+        <ul>
+            @foreach (var lesson in Lessons)
+            {
+                <li>@lesson.Title</li>
+            }
+        </ul>
+    }
+    else
+    {
+        <p>Пройдите тесты, чтобы открыть уроки.</p>
+    }
+}
+else
+{
+    <p>Данные курса загружаются...</p>
+}
+
+@code {
+    [Parameter] public int CourseId { get; set; }
+
+    [Inject] NavigationManager NavigationManager { get; set; }
+
+    private Course course;
+    private List<Lesson> Lessons;
+    private List<Test> Tests;
+
+    private int currentScore = 0;
+
+    protected override void OnInitialized()
+    {
+        var uri = new Uri(NavigationManager.Uri);
+        var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
+
+        var title = query["title"];
+        var description = query["description"];
+
+        LoadCourseData(title, description);
+    }
+
+    private void LoadCourseData(string title, string description)
+    {
+        course = new Course
+            {
+                Title = title ?? "Курс по умолчанию",
+                Description = description ?? "Описание по умолчанию"
+            };
+
+        Lessons = new List<Lesson>
+        {
+            new Lesson { Id = 1, Title = "Основы квантовой механики" },
+            new Lesson { Id = 2, Title = "Специальная теория относительности" }
+        };
+
+        Tests = new List<Test>
+                {
+            new Test
+            {
+                Id = 1,
+                Title = "Что описывает волновая функция?",
+                Options = new List<Option>
+                {
+                    new Option { Id = 1, Text = "Положение частицы в пространстве" },
+                    new Option { Id = 2, Text = "Вероятность нахождения частицы" },
+                    new Option { Id = 3, Text = "Скорость частицы" }
+                },
+                CorrectAnswerId = 2
+            },
+            new Test
+            {
+                Id = 2,
+                Title = "Какой постулат относится к теории относительности?",
+                Options = new List<Option>
+                {
+                    new Option { Id = 1, Text = "Скорость света постоянна во всех инерциальных системах отсчета" },
+                    new Option { Id = 2, Text = "Энергия не зависит от массы" },
+                    new Option { Id = 3, Text = "Свет представляет собой поток частиц" }
+                },
+                CorrectAnswerId = 1
+            }
+        };
+
+    }
+
+    private void SelectAnswer(int testId, int optionId)
+    {
+        var test = Tests.FirstOrDefault(t => t.Id == testId);
+        if (test != null)
+        {
+            test.SelectedAnswerId = optionId;
+        }
+    }
+
+    private void CheckTestAnswer(int testId)
+    {
+        var test = Tests.FirstOrDefault(t => t.Id == testId);
+        if (test != null)
+        {
+            if (test.SelectedAnswerId == test.CorrectAnswerId)
+            {
+                if (test.ResultMessage != "Правильно!") // предотвращение двойного начисления
+                {
+                    currentScore++;
+                }
+                test.ResultMessage = "Правильно!";
+            }
+            else
+            {
+                test.ResultMessage = "Неправильно. Попробуйте еще раз.";
+            }
+
+            StateHasChanged();
+        }
+    }
+
+    private void IncrementScore()
+    {
+        currentScore++;
+    }
+
+    private class Course
+    {
+        public string Title { get; set; }
+        public string Description { get; set; }
+    }
+
+    private class Lesson
+    {
+        public int Id { get; set; }
+        public string Title { get; set; }
+    }
+
+    private class Test
+    {
+        public int Id { get; set; }
+        public string Title { get; set; }
+        public List<Option> Options { get; set; }
+        public int CorrectAnswerId { get; set; }
+        public int SelectedAnswerId { get; set; }
+        public string ResultMessage { get; set; }
+    }
+
+    private class Option
+    {
+        public int Id { get; set; }
+        public string Text { get; set; }
+    }
+}
+
+<style>
+    .course-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 20px;
+    }
+
+    .course-card {
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        overflow: hidden;
+        text-align: center;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .course-image {
+        width: 100%;
+        height: 300px;
+        object-fit: cover;
+    }
+
+    button {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        cursor: pointer;
+        border-radius: 4px;
+        margin-top: 10px;
+        margin-bottom: 10px;
+    }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+    .test-container {
+        margin-bottom: 20px;
+    }
+
+        .test-container h4 {
+            font-size: 1.2rem;
+        }
+
+        .test-container div {
+            margin: 10px 0;
+        }
+
+        .test-container label {
+            margin-left: 10px;
+        }
+</style> 
